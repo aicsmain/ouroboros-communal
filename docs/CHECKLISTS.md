@@ -26,7 +26,7 @@ Used by `repo_commit` and `repo_write_commit` for all changes to the
 Ouroboros repository.
 
 | # | item | what to check | severity when FAIL |
-|---|------|---------------|--------------------|
+|---|------|---------------|-----------------|
 | 1 | bible_compliance | Does the diff violate any BIBLE.md principle? | critical |
 | 2 | development_compliance | Does it follow DEVELOPMENT.md patterns (naming, entity types, module structure)? | critical |
 | 3 | secrets_check | Are secrets, API keys, .env files, credentials present in the diff? | critical |
@@ -48,3 +48,12 @@ Ouroboros repository.
   If the condition does not apply, write verdict PASS with a short reason
   (e.g. "Not applicable — no code logic change").
 - Items 11-13 are advisory: FAIL produces a warning but does not block.
+- **Framework-limitation rebuttal:** If the `review_rebuttal` argument explicitly
+  names **(1)** a specific third-party library/framework, **(2)** the specific API
+  or behavior causing the finding, and **(3)** why replacing it is out of scope for
+  this patch — then reviewers **MUST** downgrade the verdict to PASS with an
+  advisory note. The rebuttal overrides the finding for that specific item only.
+  Example of a valid rebuttal: *"Starlette's `request.form()` reads the entire
+  multipart body; no streaming multipart parser exists in Starlette without
+  replacing the HTTP library. Content-Length pre-check is in place. Replacing
+  Starlette is out of scope for this patch."*
