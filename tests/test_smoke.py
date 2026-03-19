@@ -117,6 +117,9 @@ EXPECTED_TOOLS = [
     "compact_context",
     "list_available_tools",
     "enable_tools",
+    # Excel/CSV file upload
+    "read_uploaded_file",
+    "list_uploaded_files",
 ]
 
 

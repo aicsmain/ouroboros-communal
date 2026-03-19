@@ -30,9 +30,7 @@ from starlette.websockets import WebSocket, WebSocketDisconnect
 
 import uvicorn
 
-# ---------------------------------------------------------------------------
 # Paths
-# ---------------------------------------------------------------------------
 REPO_DIR = pathlib.Path(os.environ.get("OUROBOROS_REPO_DIR", pathlib.Path(__file__).parent))
 DATA_DIR = pathlib.Path(os.environ.get("OUROBOROS_DATA_DIR",
     pathlib.Path.home() / "Ouroboros" / "data"))
@@ -40,9 +38,7 @@ PORT = int(os.environ.get("OUROBOROS_SERVER_PORT", "8765"))
 
 sys.path.insert(0, str(REPO_DIR))
 
-# ---------------------------------------------------------------------------
 # Logging
-# ---------------------------------------------------------------------------
 _LOG_FORMAT = "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
 _log_dir = DATA_DIR / "logs"
 _log_dir.mkdir(parents=True, exist_ok=True)
@@ -54,19 +50,14 @@ _file_handler.setFormatter(logging.Formatter(_LOG_FORMAT))
 logging.basicConfig(level=logging.INFO, format=_LOG_FORMAT, handlers=[_file_handler, logging.StreamHandler()])
 log = logging.getLogger("server")
 
-# ---------------------------------------------------------------------------
 # Restart signal
-# ---------------------------------------------------------------------------
 RESTART_EXIT_CODE = 42
 PANIC_EXIT_CODE = 99
 _restart_requested = threading.Event()
 
-# ---------------------------------------------------------------------------
 # WebSocket connections manager
-# ---------------------------------------------------------------------------
 _ws_clients: List[WebSocket] = []
 _ws_lock = threading.Lock()
-
 
 def _has_ws_clients() -> bool:
     with _ws_lock:
@@ -92,7 +83,6 @@ async def broadcast_ws(msg: dict) -> None:
                 except ValueError:
                     pass
 
-
 def broadcast_ws_sync(msg: dict) -> None:
     """Thread-safe sync wrapper for broadcasting.
 
@@ -108,24 +98,17 @@ def broadcast_ws_sync(msg: dict) -> None:
     except RuntimeError:
         pass
 
-
-# ---------------------------------------------------------------------------
 # Settings (single source of truth: ouroboros.config)
-# ---------------------------------------------------------------------------
 from ouroboros.config import (
     SETTINGS_DEFAULTS as _SETTINGS_DEFAULTS,
     load_settings, save_settings, apply_settings_to_env as _apply_settings_to_env,
 )
 from ouroboros.server_runtime import has_local_routing, setup_remote_if_configured, ws_heartbeat_loop
 
-
-# ---------------------------------------------------------------------------
 # Supervisor integration
-# ---------------------------------------------------------------------------
 _supervisor_ready = threading.Event()
 _supervisor_error: Optional[str] = None
 _event_loop: Optional[asyncio.AbstractEventLoop] = None
-
 
 def _run_supervisor(settings: dict) -> None:
     """Initialize and run the supervisor loop. Called in a background thread."""
@@ -371,7 +354,6 @@ def _run_supervisor(settings: dict) -> None:
                 return
             time.sleep(min(30, 2 ** crash_count))
 
-
 def _handle_restart_in_supervisor(evt: Dict[str, Any], ctx: Any) -> None:
     """Handle restart request from agent — graceful shutdown + exit(42)."""
     st = ctx.load_state()
@@ -394,11 +376,9 @@ def _handle_restart_in_supervisor(evt: Dict[str, Any], ctx: Any) -> None:
     ctx.persist_queue_snapshot(reason="pre_restart_exit")
     _request_restart_exit()
 
-
 def _request_restart_exit() -> None:
     """Signal the server to shut down with restart exit code."""
     _restart_requested.set()
-
 
 def _execute_panic_stop(consciousness, kill_workers_fn) -> None:
     """Full emergency stop: kill everything, write panic flag, hard-exit.
@@ -451,12 +431,8 @@ def _execute_panic_stop(consciousness, kill_workers_fn) -> None:
     log.critical("PANIC STOP complete — hard exit with code %d.", PANIC_EXIT_CODE)
     os._exit(PANIC_EXIT_CODE)
 
-
-# ---------------------------------------------------------------------------
 # HTTP/WebSocket routes
-# ---------------------------------------------------------------------------
 APP_START = time.time()
-
 
 async def ws_endpoint(websocket: WebSocket) -> None:
     await websocket.accept()
@@ -497,7 +473,6 @@ async def ws_endpoint(websocket: WebSocket) -> None:
                 pass
         log.info("WebSocket client disconnected (total: %d)", len(_ws_clients))
 
-
 async def api_health(request: Request) -> JSONResponse:
     runtime_version = _read_version()
     app_version = os.environ.get("OUROBOROS_APP_VERSION", "").strip() or runtime_version
@@ -508,7 +483,6 @@ async def api_health(request: Request) -> JSONResponse:
         "runtime_version": runtime_version,
         "app_version": app_version,
     })
-
 
 async def api_state(request: Request) -> JSONResponse:
     try:
@@ -545,7 +519,6 @@ async def api_state(request: Request) -> JSONResponse:
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=500)
 
-
 async def api_settings_get(request: Request) -> JSONResponse:
     settings = load_settings()
     safe = {k: v for k, v in settings.items()}
@@ -553,7 +526,6 @@ async def api_settings_get(request: Request) -> JSONResponse:
         if safe.get(key):
             safe[key] = safe[key][:8] + "..." if len(safe[key]) > 8 else "***"
     return JSONResponse(safe)
-
 
 async def api_settings_post(request: Request) -> JSONResponse:
     try:
@@ -584,7 +556,6 @@ async def api_settings_post(request: Request) -> JSONResponse:
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=400)
 
-
 async def api_reset(request: Request) -> JSONResponse:
     """Reset all runtime data (state, memory, logs, settings) but keep repo.
 
@@ -607,7 +578,6 @@ async def api_reset(request: Request) -> JSONResponse:
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=500)
 
-
 async def api_command(request: Request) -> JSONResponse:
     try:
         body = await request.json()
@@ -619,7 +589,6 @@ async def api_command(request: Request) -> JSONResponse:
         return JSONResponse({"status": "ok"})
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=400)
-
 
 async def api_git_log(request: Request) -> JSONResponse:
     """Return recent commits, tags, and current branch/sha."""
@@ -638,7 +607,6 @@ async def api_git_log(request: Request) -> JSONResponse:
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=500)
 
-
 async def api_git_rollback(request: Request) -> JSONResponse:
     """Roll back to a specific commit or tag, then restart."""
     try:
@@ -655,7 +623,6 @@ async def api_git_rollback(request: Request) -> JSONResponse:
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=500)
 
-
 async def api_git_promote(request: Request) -> JSONResponse:
     """Promote current ouroboros branch to ouroboros-stable."""
     try:
@@ -666,9 +633,7 @@ async def api_git_promote(request: Request) -> JSONResponse:
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=500)
 
-
 _evo_cache: Dict[str, Any] = {}
-
 
 async def api_evolution_data(request: Request) -> JSONResponse:
     """Collect evolution metrics for each git tag."""
@@ -691,9 +656,7 @@ async def index_page(request: Request) -> FileResponse:
         return FileResponse(str(index), media_type="text/html")
     return HTMLResponse("<html><body><h1>Ouroboros — web/ not found</h1></body></html>", status_code=404)
 
-
 from ouroboros.config import read_version as _read_version
-
 
 async def api_cost_breakdown(request: Request) -> JSONResponse:
     """Aggregate llm_usage events from events.jsonl into cost breakdowns."""
@@ -761,7 +724,6 @@ async def api_cost_breakdown(request: Request) -> JSONResponse:
         "by_model_category": _sorted(by_model_category),
         "by_task_category": _sorted(by_task_category),
     })
-
 
 async def api_chat_history(request: Request) -> JSONResponse:
     """Return recent chat + progress messages merged chronologically."""
@@ -839,9 +801,7 @@ from ouroboros.local_model_api import (
     api_local_model_status, api_local_model_test,
 )
 
-# ---------------------------------------------------------------------------
 # App setup
-# ---------------------------------------------------------------------------
 web_dir = REPO_DIR / "web"
 web_dir.mkdir(parents=True, exist_ok=True)
 
@@ -861,7 +821,6 @@ class NoCacheStaticFiles:
             await self._app(scope, receive, send_with_no_cache)
         else:
             await self._app(scope, receive, send)
-
 
 MAX_UPLOAD_SIZE = 20 * 1024 * 1024  # 20 MB
 
@@ -925,7 +884,6 @@ routes = [
 
 from contextlib import asynccontextmanager, suppress
 
-
 @asynccontextmanager
 async def lifespan(app):
     global _event_loop
@@ -976,15 +934,10 @@ async def lifespan(app):
         except Exception:
             pass
 
-
 app = Starlette(routes=routes, lifespan=lifespan)
 
-
-# ---------------------------------------------------------------------------
 # Port selection
-# ---------------------------------------------------------------------------
 PORT_FILE = DATA_DIR / "state" / "server_port"
-
 
 def _find_free_port(start: int = 8765, max_tries: int = 10) -> int:
     """Try binding to *start* with SO_REUSEADDR (survives TIME_WAIT after restart).
@@ -1007,15 +960,11 @@ def _find_free_port(start: int = 8765, max_tries: int = 10) -> int:
             continue
     return start
 
-
 def _write_port_file(port: int) -> None:
     PORT_FILE.parent.mkdir(parents=True, exist_ok=True)
     PORT_FILE.write_text(str(port), encoding="utf-8")
 
-
-# ---------------------------------------------------------------------------
 # Main
-# ---------------------------------------------------------------------------
 if __name__ == "__main__":
     actual_port = _find_free_port(PORT)
     if actual_port != PORT:
