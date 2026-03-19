@@ -1,0 +1,44 @@
+# Ouroboros systemd user service
+#
+# Install:
+#   mkdir -p ~/.config/systemd/user
+#   cp scripts/ouroboros.service ~/.config/systemd/user/
+#   systemctl --user daemon-reload
+#   systemctl --user enable ouroboros
+#   systemctl --user start ouroboros
+#
+# Alternatively, run `bash scripts/install-service.sh` which auto-fills the
+# correct working directory based on the current repo location.
+#
+# Logs:
+#   journalctl --user -u ouroboros -f
+#
+# To persist after logout (required for headless servers):
+#   sudo loginctl enable-linger $(whoami)
+
+[Unit]
+Description=Ouroboros AI Agent
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+# NOTE: Edit the two lines below to match your actual clone location if needed.
+# %h expands to your home directory. Change 'ouroboros-communal' to match your repo folder.
+# Or run scripts/install-service.sh to auto-configure from the current directory.
+WorkingDirectory=%h/ouroboros-communal
+ExecStart=/bin/bash %h/ouroboros-communal/scripts/run.sh
+
+# run.sh handles restart logic internally (exit 42 = restart, 99 = panic)
+# systemd only needs to restart on truly unexpected deaths of run.sh itself
+Restart=on-failure
+RestartSec=10
+
+# Environment
+Environment=PYTHONUNBUFFERED=1
+
+# Resource limits (optional, adjust as needed)
+# LimitNOFILE=65536
+
+[Install]
+WantedBy=default.target

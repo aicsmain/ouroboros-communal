@@ -15,6 +15,10 @@ export function initChat({ ws, state, updateUnreadBadge }) {
         </div>
         <div id="chat-messages"></div>
         <div id="chat-input-area">
+            <input type="file" id="file-input" accept=".xlsx,.xls,.csv,.txt,.json,.md" style="display:none">
+            <button class="icon-btn upload-btn" id="chat-upload" title="Upload file (Excel, CSV, text)">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+            </button>
             <textarea id="chat-input" placeholder="Message Ouroboros..." rows="1"></textarea>
             <button class="icon-btn" id="chat-send">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
@@ -26,6 +30,30 @@ export function initChat({ ws, state, updateUnreadBadge }) {
     const messagesDiv = document.getElementById('chat-messages');
     const input = document.getElementById('chat-input');
     const sendBtn = document.getElementById('chat-send');
+    const uploadBtn = document.getElementById('chat-upload');
+    const fileInput = document.getElementById('file-input');
+
+    // File upload handler
+    uploadBtn.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', async () => {
+        const file = fileInput.files[0];
+        if (!file) return;
+        fileInput.value = '';  // reset so same file can be re-selected
+        const formData = new FormData();
+        formData.append('file', file);
+        try {
+            addMessage(`📎 Uploading: ${file.name}...`, 'user', false, null);
+            const res = await fetch('/api/upload', { method: 'POST', body: formData });
+            const data = await res.json();
+            if (data.error) {
+                addMessage(`⚠️ Upload failed: ${data.error}`, 'assistant', false, null);
+            } else {
+                ws.send({ type: 'chat', content: `[Uploaded file: ${data.filename}]` });
+            }
+        } catch (e) {
+            addMessage(`⚠️ Upload error: ${e.message}`, 'assistant', false, null);
+        }
+    });
 
     const _chatHistory = [];
     const seenAssistantKeys = new Set();

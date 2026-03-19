@@ -862,6 +862,44 @@ class NoCacheStaticFiles:
         else:
             await self._app(scope, receive, send)
 
+
+MAX_UPLOAD_SIZE = 20 * 1024 * 1024  # 20 MB
+
+async def api_upload(request: Request) -> JSONResponse:
+    """Handle file upload. Saves to DATA_DIR/uploads/."""
+    import re
+    try:
+        # Pre-check Content-Length before parsing the body (framework limitation note:
+        # Starlette's request.form() buffers multipart data internally; the Content-Length
+        # check here is the primary guard against oversized uploads).
+        content_length = request.headers.get("content-length")
+        if content_length and int(content_length) > MAX_UPLOAD_SIZE:
+            return JSONResponse({"error": "File too large (max 20MB)"}, status_code=413)
+
+        form = await request.form()
+        upload_file = form.get("file")
+        if upload_file is None:
+            return JSONResponse({"error": "No file provided"}, status_code=400)
+        content = await upload_file.read()
+        if len(content) > MAX_UPLOAD_SIZE:
+            return JSONResponse({"error": "File too large (max 20MB)"}, status_code=413)
+        safe_name = re.sub(r'[^\w\-.]', '_', upload_file.filename or "upload") or "upload"
+        uploads_dir = DATA_DIR / "uploads"
+        uploads_dir.mkdir(parents=True, exist_ok=True)
+        target = uploads_dir / safe_name
+        if target.exists():
+            stem, suffix = target.stem, target.suffix
+            c = 1
+            while target.exists():
+                target = uploads_dir / f"{stem}_{c}{suffix}"
+                c += 1
+        target.write_bytes(content)
+        return JSONResponse({"status": "ok", "filename": target.name,
+                             "original_name": upload_file.filename, "size": len(content)})
+    except Exception as e:
+        log.exception("Upload failed")
+        return JSONResponse({"error": str(e)}, status_code=500)
+
 routes = [
     Route("/", endpoint=index_page),
     Route("/api/health", endpoint=api_health),
@@ -880,6 +918,7 @@ routes = [
     Route("/api/local-model/stop", endpoint=api_local_model_stop, methods=["POST"]),
     Route("/api/local-model/status", endpoint=api_local_model_status),
     Route("/api/local-model/test", endpoint=api_local_model_test, methods=["POST"]),
+    Route("/api/upload", endpoint=api_upload, methods=["POST"]),
     WebSocketRoute("/ws", endpoint=ws_endpoint),
     Mount("/static", app=NoCacheStaticFiles(directory=str(web_dir)), name="static"),
 ]

@@ -1,6 +1,6 @@
 [project]
 name = "ouroboros"
-version = "4.2.0"
+version = "4.3.0"
 description = "Self-creating AI agent with constitution, background consciousness, and persistent identity"
 readme = "README.md"
 license = {text = "MIT"}
@@ -28,6 +28,8 @@ dependencies = [
     "starlette",
     "uvicorn[standard]",
     "websockets",
+    "openpyxl",
+    "python-multipart",
 ]
 
 [project.urls]

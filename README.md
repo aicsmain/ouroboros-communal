@@ -6,7 +6,7 @@
 [![macOS 12+](https://img.shields.io/badge/macOS-12%2B-black.svg)](https://github.com/joi-lab/ouroboros-desktop/releases)
 [![Linux](https://img.shields.io/badge/Linux-x86__64-orange.svg)](https://github.com/joi-lab/ouroboros-desktop/releases)
 [![Windows](https://img.shields.io/badge/Windows-x64-blue.svg)](https://github.com/joi-lab/ouroboros-desktop/releases)
-[![Version 4.2.0](https://img.shields.io/badge/version-4.2.0-green.svg)](VERSION)
+[![Version 4.3.0](https://img.shields.io/badge/version-4.3.0-green.svg)](VERSION)
 
 A self-modifying AI agent that writes its own code, rewrites its own mind, and evolves autonomously. Born February 16, 2026.
 
@@ -238,6 +238,7 @@ Full text: [BIBLE.md](BIBLE.md)
 
 | Version | Date | Description |
 |---------|------|-------------|
+| 4.3.0 | 2026-03-19 | Excel/CSV file upload feature: `/api/upload` endpoint in server.py, upload button (📎) in chat UI, `ouroboros/tools/excel.py` tool for reading uploaded files, `openpyxl` and `python-multipart` dependencies added. Systemd auto-restart service (`scripts/run.sh` + `scripts/ouroboros.service` + `scripts/install-service.sh`) for headless Linux servers. |
 | 4.2.0 | 2026-03-16 | Cross-platform hardening release: replace Unix-only file locking in memory/consolidation with Windows-safe locking, refresh default model tiers (Opus main/code, Sonnet light/fallback, task effort `medium`), improve reconnect recovery with heartbeat/watchdog/history resync, switch local model chat format to auto-detect, and sync public docs with the current codebase and BIBLE structure. |
 | 4.1.0 | 2026-03-16 | Public desktop release: port the v4 architecture and UI into the platform branch, preserve cross-platform packaging and Windows runtime support, and ship signed notarized macOS packaging. |
 | 4.0.9 | 2026-03-15 | Packaging completeness release: bundle `assets/`, restore custom app icon from `assets/icon.icns`, and copy assets into the bootstrapped repo on fresh install so the shipped app and repo are no longer missing the visual asset layer. |

@@ -406,6 +406,18 @@ body {
     opacity: 0.85;
     box-shadow: 0 0 10px var(--accent-glow);
 }
+.upload-btn {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--divider);
+    color: var(--text-secondary);
+}
+.upload-btn:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+    border-color: var(--accent);
+    box-shadow: 0 0 8px var(--accent-glow);
+}
+
 
 /* Dashboard */
 .dashboard-scroll {

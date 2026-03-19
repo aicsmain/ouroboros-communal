@@ -1,4 +1,4 @@
-# Ouroboros v4.2.0 — Architecture & Reference
+# Ouroboros v4.3.0 — Architecture & Reference
 
 This document describes every component, page, button, API endpoint, and data flow.
 It is the single source of truth for how the system works. Keep it updated.
@@ -293,6 +293,7 @@ Navigation is a left sidebar with 8 pages.
 | POST | `/api/local-model/stop` | Stop local model server |
 | GET | `/api/local-model/status` | Local model status and readiness |
 | GET | `/api/evolution-data` | Evolution metrics per git tag (LOC, prompt sizes, memory) |
+| POST | `/api/upload` | Upload a file (Excel, CSV, text). Saves to `DATA_DIR/uploads/`. Max 20MB. |
 | GET | `/api/chat/history` | Merged chat + progress messages (chronological, limit param) |
 | POST | `/api/local-model/test` | Local model sanity test (chat + tool calling) |
 | WS | `/ws` | WebSocket: chat messages, commands, log streaming |
